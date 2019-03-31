@@ -1,7 +1,13 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import queryString from 'query-string';
-import { ListGroup, ListGroupItem, Card, Spinner } from 'react-bootstrap';
+import {
+  ListGroup,
+  ListGroupItem,
+  Card,
+  Spinner,
+  Alert
+} from 'react-bootstrap';
 import { Button } from 'react-bootstrap/Button';
 import Pagination from 'react-js-pagination';
 
@@ -92,9 +98,16 @@ class Books extends Component {
   }
 
   render() {
-    const { books, count } = this.state;
+    const { books, count, error } = this.state;
     const page = this.getCurrentPage();
 
+    if (error) {
+      return (
+        <Alert key={'err'} variant={'primary'}>
+          Failed to fetch - check your connection
+        </Alert>
+      );
+    }
     if (!(page in books)) {
       return <Spinner animation="border" />;
     }
@@ -105,7 +118,6 @@ class Books extends Component {
 
     return (
       <div className="Books">
-        <h1>Books</h1>
         <ListGroup>{bookListItems}</ListGroup>
         <Pagination
           itemClass="page-item"
