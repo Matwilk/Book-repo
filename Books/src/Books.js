@@ -80,7 +80,7 @@ class Books extends Component {
 
     const queryObj = { page: queries.page };
 
-    this.setState({ books: [] });
+    this.setState({ books: [], pending: true });
 
     // If there is a string query then add into object
     if (queries.query) {
@@ -107,10 +107,11 @@ class Books extends Component {
       .then(results => {
         this.setState({
           books: results.books,
-          count: results.count
+          count: results.count,
+          pending: false
         });
       })
-      .catch(error => this.setState({ error }));
+      .catch(error => this.setState({ error, pending: false }));
   }
 
   /**
@@ -196,17 +197,8 @@ class Books extends Component {
   }
 
   render() {
-    const { books, count, error, query } = this.state;
+    const { books, count, error, query, pending } = this.state;
     const page = this.getCurrentPageQueries().page;
-
-    if (error) {
-      return (
-        <Alert key={'err'} variant={'primary'}>
-          Failed to fetch - check your connection
-        </Alert>
-      );
-    }
-
     const bookListItems = books.length ? this.renderCardGrid(books) : [];
 
     return (
@@ -245,8 +237,17 @@ class Books extends Component {
             onChange={pageNum => this.handlePageChange(pageNum)}
           />
         </div>
-
-        {!books.length && (
+        {error && (
+          <Alert key={'err'} variant={'primary'}>
+            Failed to fetch - check your connection
+          </Alert>
+        )}
+        {!error && !pending && !count && (
+          <Alert key={'err'} variant={'primary'}>
+            No results found
+          </Alert>
+        )}
+        {pending && (
           <div className="d-flex justify-content-center">
             <Spinner animation="border" />
           </div>
