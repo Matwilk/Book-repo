@@ -20,6 +20,11 @@ import './Books.scss';
 const url = 'http://nyx.vima.ekt.gr:3000/api/books';
 
 class Books extends Component {
+  /**
+   *  Books constructor.
+   *  @param {object} props to constructor.
+   *  @constructor
+   */
   constructor(props: Object) {
     super(props);
     this.state = {
@@ -35,6 +40,10 @@ class Books extends Component {
     history: PropTypes.object.isRequired
   };
 
+  /**
+   *  Extract the query parameters from the current route.
+   *  @return {object} the parsed and santitised query values
+   */
   getCurrentPageQueries() {
     const { location } = this.props;
     const parsedSearch = queryString.parse(location.search);
@@ -45,10 +54,16 @@ class Books extends Component {
     return parsedSearch;
   }
 
+  /**
+   * On component mount, fetch the first page
+   */
   componentDidMount() {
     this.fetchPage();
   }
 
+  /**
+   * On component update, if page changed then fetch new page
+   */
   componentDidUpdate(prevProps) {
     window.scrollTo(0, 0);
 
@@ -57,6 +72,9 @@ class Books extends Component {
     }
   }
 
+  /**
+   * Fetch the page based on the current route.
+   */
   fetchPage() {
     const queries = this.getCurrentPageQueries();
 
@@ -95,6 +113,11 @@ class Books extends Component {
       .catch(error => this.setState({ error }));
   }
 
+  /**
+   * Return a rendered Card component for the current book.
+   *  @param {object} book the book to render.
+   *  @return {JSX}
+   */
   renderCard(book) {
     return (
       <Card className="h-100 mb4 shadow-sm">
@@ -114,6 +137,11 @@ class Books extends Component {
     );
   }
 
+  /**
+   * Return the rendered grid rows for the books.
+   *  @param {object} books the books to render.
+   *  @return {JSX}
+   */
   renderCardGrid(books) {
     const rows = [];
     for (let i = 0; i < books.length / 2; i++) {
@@ -131,6 +159,12 @@ class Books extends Component {
     return rows;
   }
 
+  /**
+   * Naviate to a new page based on the latest page and query string.  Use override if set
+   * else use the value from the current route
+   *  @param {object} pageNumber the page to navigate to.
+   *  @param {object} queryOverride the query string to use (set when user has entered a value).
+   */
   handlePageChange(pageNumber = 1, queryOverride = null) {
     const { history } = this.props;
     history.push({
@@ -143,10 +177,18 @@ class Books extends Component {
     });
   }
 
+  /**
+   * Handing the input change.  Store selection in the state
+   *  @param {object} event the page to navigate to.
+   */
   handleInputChange(event) {
     this.setState({ query: event.target.value });
   }
 
+  /**
+   * Handing the input submission.  Request to navigate to a new page based on the selected input string
+   *  @param {object} event the page to navigate to.
+   */
   handleSubmit(event) {
     event.preventDefault();
 
