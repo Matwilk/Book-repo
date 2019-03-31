@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import queryString from 'query-string';
-import { ListGroup, ListGroupItem, Card } from 'react-bootstrap';
+import { ListGroup, ListGroupItem, Card, Spinner } from 'react-bootstrap';
 import { Button } from 'react-bootstrap/Button';
 import Pagination from 'react-js-pagination';
 
@@ -12,7 +12,7 @@ const url = 'http://nyx.vima.ekt.gr:3000/api/books';
 class Books extends Component {
   constructor(props: Object) {
     super(props);
-    this.state = { results: { books: [], count: 0 }, error: '' };
+    this.state = { books: {}, count: 0, error: '' };
   }
 
   static propTypes = {
@@ -34,6 +34,7 @@ class Books extends Component {
     window.scrollTo(0, 0);
 
     if (prevProps.location.search !== this.props.location.search) {
+      this.setState();
       this.fetchPage(this.getCurrentPage());
     }
   }
@@ -53,7 +54,14 @@ class Books extends Component {
         return response;
       })
       .then(response => response.json())
-      .then(results => this.setState({ results }))
+      .then(results =>
+        this.setState({
+          books: Object.assign({}, this.state.books, {
+            [page]: results.books
+          }),
+          count: results.count
+        })
+      )
       .catch(error => this.setState({ error }));
   }
 
@@ -84,13 +92,14 @@ class Books extends Component {
   }
 
   render() {
-    const { results } = this.state;
+    const { books, count } = this.state;
+    const page = this.getCurrentPage();
 
-    if (!results.books.length) {
-      return null;
+    if (!(page in books)) {
+      return <Spinner animation="border" />;
     }
 
-    const bookListItems = results.books.map(book => (
+    const bookListItems = books[page].map(book => (
       <ListGroupItem key={book.id}>{this.renderCard(book)}</ListGroupItem>
     ));
 
@@ -101,9 +110,9 @@ class Books extends Component {
         <Pagination
           itemClass="page-item"
           linkClass="page-link"
-          activePage={this.getCurrentPage()}
+          activePage={page}
           itemsCountPerPage={20}
-          totalItemsCount={results.count}
+          totalItemsCount={count}
           pageRangeDisplayed={5}
           onChange={pageNum => this.handlePageChange(pageNum)}
         />
