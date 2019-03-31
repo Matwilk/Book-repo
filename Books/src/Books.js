@@ -6,9 +6,11 @@ import {
   ListGroupItem,
   Card,
   Spinner,
-  Alert
+  Alert,
+  InputGroup,
+  Form,
+  Button
 } from 'react-bootstrap';
-import { Button } from 'react-bootstrap/Button';
 import Pagination from 'react-js-pagination';
 
 import './Books.scss';
@@ -18,7 +20,12 @@ const url = 'http://nyx.vima.ekt.gr:3000/api/books';
 class Books extends Component {
   constructor(props: Object) {
     super(props);
-    this.state = { books: {}, count: 0, error: '' };
+    this.state = {
+      books: {},
+      count: 0,
+      error: '',
+      query: this.getCurrentPageQueries().query
+    };
   }
 
   static propTypes = {
@@ -26,32 +33,40 @@ class Books extends Component {
     history: PropTypes.object.isRequired
   };
 
-  getCurrentPage() {
+  getCurrentPageQueries() {
     const { location } = this.props;
     const query = queryString.parse(location.search);
-    return query.page ? query.page : 1;
+    return query;
   }
 
   componentDidMount() {
-    this.fetchPage(this.getCurrentPage());
+    this.fetchPage();
   }
 
   componentDidUpdate(prevProps) {
     window.scrollTo(0, 0);
 
     if (prevProps.location.search !== this.props.location.search) {
-      this.setState();
-      this.fetchPage(this.getCurrentPage());
+      this.fetchPage();
     }
   }
 
-  fetchPage(page) {
+  fetchPage() {
+    const queries = this.getCurrentPageQueries();
+
+    const queryObj = { page: queries.page };
+    if (queries.query) {
+      queryObj.filters = [{ type: 'all', values: [queries.query] }];
+    }
+
+    const data = JSON.stringify(queryObj);
+
     fetch(url, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+        'Content-Type': 'application/json'
       },
-      body: queryString.stringify({ page })
+      body: data
     })
       .then(response => {
         if (!response.ok) {
@@ -60,14 +75,12 @@ class Books extends Component {
         return response;
       })
       .then(response => response.json())
-      .then(results =>
+      .then(results => {
         this.setState({
-          books: Object.assign({}, this.state.books, {
-            [page]: results.books
-          }),
+          books: results.books,
           count: results.count
-        })
-      )
+        });
+      })
       .catch(error => this.setState({ error }));
   }
 
@@ -88,18 +101,32 @@ class Books extends Component {
     );
   }
 
-  handlePageChange(pageNumber) {
+  handlePageChange(pageNumber = 1, queryOverride = null) {
     const { history } = this.props;
-
+    this.setState({ books: [] });
     history.push({
       pathname: '/',
-      search: `?page=${pageNumber}`
+      search: `?page=${pageNumber}&query=${
+        queryOverride !== null
+          ? queryOverride
+          : this.getCurrentPageQueries().query
+      }`
     });
   }
 
+  handleInputChange(event) {
+    this.setState({ query: event.target.value });
+  }
+
+  handleSubmit(event) {
+    event.preventDefault();
+
+    this.handlePageChange(1, this.state.query);
+  }
+
   render() {
-    const { books, count, error } = this.state;
-    const page = this.getCurrentPage();
+    const { books, count, error, query } = this.state;
+    const page = this.getCurrentPageQueries().page;
 
     if (error) {
       return (
@@ -108,16 +135,31 @@ class Books extends Component {
         </Alert>
       );
     }
-    if (!(page in books)) {
-      return <Spinner animation="border" />;
-    }
 
-    const bookListItems = books[page].map(book => (
-      <ListGroupItem key={book.id}>{this.renderCard(book)}</ListGroupItem>
-    ));
+    const bookListItems = books.length
+      ? books.map(book => (
+          <ListGroupItem key={book.id}>{this.renderCard(book)}</ListGroupItem>
+        ))
+      : [];
 
     return (
       <div className="Books">
+        <Form onSubmit={e => this.handleSubmit(e)}>
+          <InputGroup className="mb-3">
+            <Form.Control
+              placeholder="Enter your search string"
+              value={query}
+              aria-label="Search"
+              aria-describedby="basic-addon1"
+              onChange={e => this.handleInputChange(e)}
+            />
+            <Button variant="primary" type="submit">
+              Submit
+            </Button>
+          </InputGroup>
+        </Form>
+        {!books.length && <Spinner animation="border" />}
+
         <ListGroup>{bookListItems}</ListGroup>
         <Pagination
           itemClass="page-item"
