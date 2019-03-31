@@ -206,8 +206,8 @@ class Books extends Component {
         <Jumbotron className="text-center">
           <h1>Books</h1>
           <p>
-            Seach the full collection of books available. Alternatively enter a
-            search string to filter the results.
+            Browse the full collection of books available. Alternatively, enter
+            a search string to filter the results.
           </p>
           <Form onSubmit={e => this.handleSubmit(e)}>
             <InputGroup className="mb-3">
